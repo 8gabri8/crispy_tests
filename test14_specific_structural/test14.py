@@ -42,12 +42,12 @@ if calculations:
     
 E_avg = io.load_txt("data/test14/avg_structural/files/sub-1_ts-innov.tsv.gz")
 E_spec = io.load_txt("data/test14/specific_structural/files/sub-1_ts-innov.tsv.gz")
-taus_avg = io.load_txt("data/test14/avg_structural/files/sub-1_tau_scalar.tsv")
-taus_spec = io.load_txt("data/test14/specific_structural/files/sub-1_tau_scalar.tsv")
+taus_avg = np.array(io.load_txt("data/test14/avg_structural/files/sub-1_tau_scalar.tsv"))
+taus_spec = np.array(io.load_txt("data/test14/specific_structural/files/sub-1_tau_scalar.tsv"))
 
   
 fig = plt.figure(layout="constrained")
-fig, ax = plt.subplot_mosaic("CCc;DDd;XYz")
+fig, ax = plt.subplot_mosaic("CCc;DDd;XYZ")
 ax["X"].scatter([0,1],taus_avg); ax["X"].set_title("taus_avg")
 ax["Y"].scatter([0,1],taus_spec); ax["Y"].set_title("taus_specific")
 
@@ -55,6 +55,9 @@ ax["C"].imshow(E_avg, interpolation='nearest', aspect="auto"); ax["C"].set_title
 ax["c"].text(0,0,f"norm = {np.linalg.norm(E_avg):.2f} \nmean = {np.mean(E_avg):.2f}"); ax["c"].tick_params(left = False, right = False , labelleft = False , labelbottom = False, bottom = False)
 ax["D"].imshow(E_spec, interpolation='nearest', aspect="auto"); ax["D"].set_title(f"E_spec"); ax["D"].tick_params(left = False, right = False , labelleft = False , labelbottom = False, bottom = False)
 ax["d"].text(0,0,f"norm = {np.linalg.norm(E_spec):.2f} \nmean = {np.mean(E_spec):.2f}"); ax["d"].tick_params(left = False, right = False , labelleft = False , labelbottom = False, bottom = False)
+
+#ax["Z"].text(0,0,f"E_spec-E_avg\nnorm = {(np.subtract(E_spec, E_avg)):.2f} \nmean = {np.mean(np.subtract(E_spec,E_avg)):.2f}"); ax["Z"].tick_params(left = False, right = False , labelleft = False , labelbottom = False, bottom = False)
+
 
 plt.tight_layout()
 fig.savefig("data/test14/avg_Vs_specific.png")
