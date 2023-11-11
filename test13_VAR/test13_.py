@@ -128,6 +128,7 @@ for i in range(4):
     for j in range(3):
         a[i,j].tick_params(left = False, right = False , labelleft = False , labelbottom = False, bottom = False) 
 
+fig.suptitle("Nothing done --- z-scored --- scaled 0-1")
 fig.savefig("data/test13/A_M.png")
 
 ###### PLOT ERRORS
@@ -168,7 +169,7 @@ plt.colorbar(pos22, ax=a[2,2])
 # clipped to have same range of valuues
 min = 0; max = 1
 
-pos03 = a[0,3].imshow(E_var, interpolation='nearest', aspect="auto", vmin=min, vmax=max); a[0,3].set_title(f"functinal connectivity")
+pos03 = a[0,3].imshow(E_var, interpolation='nearest', aspect="auto", vmin=min, vmax=max); a[0,3].set_title(f"E VAR")
 pos13 = a[1,3].imshow(E_diff, interpolation='nearest', aspect="auto", vmin=min, vmax=max); a[1,3].set_title(f"A, VAR matrix")
 pos23 = a[2,3].imshow(E_diff_nn, interpolation='nearest', aspect="auto", vmin=min, vmax=max); a[2,3].set_title(f"M, similar to VAR matrix")
 
@@ -182,6 +183,26 @@ for i in range(3):
     for j in range(4):
         a[i,j].tick_params(left = False, right = False , labelleft = False , labelbottom = False, bottom = False) 
 
+fig.suptitle("Nothing Done --- z-scored --- Normalized across time --- Scaled 0-1")
 
 fig.savefig("data/test13/errors.png")
 
+################################################################
+### CALCULATE DIFFERENCE BETWEEN ERRORS
+#################################################################
+
+from numpy.linalg import norm
+
+fig, a = plt.subplots(3,1, dpi=300)
+
+pos0 = a[0].imshow(np.abs(E_var - E_diff), interpolation='nearest', aspect="auto"); a[0].set_title(f"abs(E_var - E_diff), norm{norm(np.abs(E_var - E_diff)):.2f}")
+pos1 = a[1].imshow(np.abs(E_var - E_diff_nn), interpolation='nearest', aspect="auto"); a[1].set_title(f"abs(E_var - E_diff_nn), norm={norm(np.abs(E_var - E_diff_nn)):.2f}")
+pos2 = a[2].imshow(np.abs(E_diff - E_diff_nn), interpolation='nearest', aspect="auto"); a[2].set_title(f"abs(E_diff - E_diff_nn), norm={norm(np.abs(E_diff - E_diff_nn)):.2f}")
+
+plt.colorbar(pos0, ax=a[0]) 
+plt.colorbar(pos1, ax=a[1])
+plt.colorbar(pos2, ax=a[2])
+
+
+plt.tight_layout()
+fig.savefig("data/test13/differences_errors.png")
