@@ -24,7 +24,7 @@ from nigsp.operations import laplacian
 		- -s S, this way we are using L0(I), L1
 		- -s S -snn L2 L3 ... (calculated laplancians before)
 
-    NB laplacinae passed ARE NOT NORMLAISED
+    NB LAPLAICANS NOERMALISED BEFIRE ELEVATIONG TO POWER
 """
 
 #structural matrix
@@ -40,19 +40,25 @@ if not os.path.exists(L_path):
 #max power taht we want to test
 n = 10 #max power will be n-1
 
-calculations = 0
+calculations = 1
 
 if calculations:
 
     #compute powers of the laplacian (of the strucutral matrix)
     L, degree = laplacian.compute_laplacian(s, selfloops="degree") #THEY ARE NOT NORMALISED
+    #normalised
+    L = laplacian.normalisation(L, degree, norm="rwo")
+    
 
     for i in range(n): #NB 0,1 laplcansa will, not be used, only from 2 power ongoing
         L_power = np.linalg.matrix_power(L, i)
         io.export_mtx(L_power,f'{L_path}/L_{i}.mat') 
 
     for i in range(n):
+        print(f"\n\nCALCULATING POWER {i}\n\n")
+
         if i == 0: continue #makes no sense
+
         if i == 1: # -s S, this way we are using L0(I), L1
             #without tau 0
             crispy_gls_scalar.multitau_gls_estimation(tsfile = "raw/RS_1subj.mat",
@@ -87,7 +93,6 @@ if calculations:
         sub = "1",
         odr = f"data/test15/{i}_powers_yes_tau0")
 
-#list that contains lists of the taus for arch time we increase the power used
 
 ########################################
 ########################################
@@ -114,7 +119,6 @@ a.set_xlabel("Order of polynomial")
 a.set_ylabel("norm(Error)")
 
 plt.legend()
-
 plt.savefig("data/test15/E_Vs_number_powers_used.png")
 
 ##########################################################
@@ -142,22 +146,23 @@ for i in np.arange(1, n, 1): #i don0t want 0 index
         taus_n0.append(np.array(io.load_txt(f"data/test15/{i}_powers_no_tau0/files/sub-1_tau_scalar.tsv")))
         taus_y0.append(np.array(io.load_txt(f"data/test15/{i}_powers_yes_tau0/files/sub-1_tau_scalar.tsv")))
 
-
 #NB taus_y0 has always an elemtn in addition (the tua0)
 
 fig, a = plt.subplots(1,1, dpi=300)
 
-for i in np.arange(1, n, 1):
-    i-=1 #ATTENTION indeed in the list i save withou L0
-    print(f"power: ", {i+1})
-    print("without self loop: ", taus_n0[i])
-    print("with self loop: ", taus_y0[i])
+for i in np.arange(1, n, 1): #i is the max power that i am using
+    print(f"power: ", {i})
+
+    #ATTENTION in the list indices start from 0!!
+
+    print("without self loop: ", taus_n0[i-1])
+    print("with self loop: ", taus_y0[i-1])
 
     #print(len(taus_n0[i]), len(np.arange(1, len(taus_n0[i])+1, 1))) 
     #print(len(taus_y0[i]), len(np.arange(0, len(taus_y0[i]), 1))) 
 
-    a.plot(np.arange(1, len(taus_n0[i])+1, 1), taus_n0[i], "o-", label=f"power:{i+1} without self loops", linewidth=2)
-    a.plot(np.arange(0, len(taus_y0[i]), 1), taus_y0[i], "o-", label=F"power:{i+1} with self loops", linewidth=2)
+    a.plot(np.arange(1, len(taus_n0[i-1])+1, 1), taus_n0[i-1], "o-", label=f"power:{i} without self loops", linewidth=2)
+    a.plot(np.arange(0, len(taus_y0[i-1]), 1), taus_y0[i-1], "o-", label=F"power:{i} with self loops", linewidth=2)
 
 a.set_xlabel("tau number")
 a.set_ylabel("value of tau")

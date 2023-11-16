@@ -22,47 +22,72 @@ if not os.path.exists(data_path):
 s = io.load_mat('raw/SC_avg56.mat')
 #print(s.shape)
 
-# Load .mat file
-mat = scipy.io.loadmat('raw/Glasser_ch2_yeo_RS7.mat')
-#print(mat.keys())
-data = mat['yeoROIs'] #data --> array of arraus of single elements, the single lemts are label of in which FN is the specific node
-data = data.flatten() #NB 8 FN
-#print(np.unique(data))
-n = len(np.unique(data))
+# Load lables of the node, in which FN each node belongs
+labels = io.load_mat(f'raw/FN_labels.mat')
+n_FN = len(np.unique(labels)) #they should be 7 (from 0 to 1)
 
-calculations = 0
+calculations = 1
 if calculations:
-    vis_mat = np.zeros((s.shape[0], s.shape[1], n))
+
+    vis_mat = np.zeros((s.shape[0], s.shape[1], n_FN))
 
     #create strucural matirces, one for each FN
-    for FN in np.arange(1,n+1,1):
+    for FN in range(n_FN):
         temp = np.zeros((s.shape[0], s.shape[1]))
         #print(temp.shape)
         #print(len(range(s.shape[0])), len(data))
-        for node, label in zip(range(s.shape[0]), data):
+        for node, label in zip(range(s.shape[0]), labels):
             if(label == FN):
+                print(node, label)
                 temp[:,node] = s[:,node] #i-th colums
                 temp[node,:] = s[node,:]
+        
+        temp = temp/2 #ATTENTION!!!!!!!
         io.export_mtx(temp,f'data/test16/FN_{FN}.mat')
-        vis_mat[:,:, FN-1] = temp
+        vis_mat[:,:, FN] = temp
 
-    fig, a = plt.subplots(1,n, dpi=300)
-    for i in np.arange(1,n+1,1):
-        a[i-1].imshow(np.log(vis_mat[:,:,i-1]), interpolation='nearest', aspect="auto"); a[i-1].set_title(f"FN {i}")
+    if np.allclose(np.sum(vis_mat, axis=2),s): print("\n\nOK\n\n") 
+    else: print("\n\nNO\n\n")
 
+###########
+    #THIS SET THE DIAGONAL??
+    # unique_labels = np.unique(labels)
+    # #unique_labels = unique_labels[unique_labels>0]
+    # mtx = {}
+    # for label in unique_labels:
+    #     mtx[label] = np.zeros(s.shape)
+    #     mtx[label][s==label, s==label] = s[s==label, s==label]
+    # fig, a = plt.subplots(1,n_FN, figsize=(10,3), dpi=300)
+    # for i in range(n_FN):
+    #     a[i].imshow(np.log(mtx[i]), cmap="jet", interpolation='nearest'); a[i].set_title(f"FN {i}")
+    # plt.tight_layout()
+    # plt.savefig("data/test16/stef_FN_matrices.png")
+##############à
+
+    fig, a = plt.subplots(1,2, figsize=(10,3), dpi=300)
+    a[0].imshow(s, cmap="jet", interpolation='nearest'); a[0].set_title(f"s")
+    a[1].imshow(np.sum(vis_mat, axis=2), cmap="jet", interpolation='nearest'); a[1].set_title(f"sum")
+    plt.tight_layout()
+    plt.savefig("data/test16/test_structural.png")
+
+    fig, a = plt.subplots(1,n_FN, figsize=(10,3), dpi=300)
+    for i in range(n_FN):
+        a[i].imshow(np.log(vis_mat[:,:,i]), cmap="jet", interpolation='nearest'); a[i].set_title(f"FN {i}")
+    plt.tight_layout()
     plt.savefig("data/test16/FN_matrices.png")
 
-    #test if they are mutually esclusive
-    # temp = s.copy()
-    # for i in np.arange(1,7+1,1):
-    #     temp = temp - vis_mat[:,:,i-1]
-    # if(np.sum(temp) != 0): print("somenthing wrong")
+    fig, a = plt.subplots(1,1, figsize=(10,3), dpi=300)
+    a.imshow(np.log(vis_mat[:,:,1]), cmap="jet", interpolation='nearest'); a.set_title(f"FN {i}")
+    plt.tight_layout()
+    plt.savefig("data/test16/single_matrice.png")
 
-    string_list = ["data/test16/FN_" + str(i) + ".mat" for i in np.arange(1,n+1,1)]
-    print(string_list)
+    #path of the matrices to use
+    string_list = ["data/test16/FN_" + str(i) + ".mat" for i in range(n_FN)]
+    #print(string_list)
 
     crispy_gls_scalar.multitau_gls_estimation(tsfile = "raw/RS_1subj.mat",
                     structural_files = string_list, #f"raw/SC_avg56.mat",
+                    add_tau0 = True,
                     sub = "1",
                     odr = "data/test16/seven_FN_yes_selfloops")
     
@@ -76,54 +101,78 @@ taus_sl = np.array(io.load_txt("data/test16/seven_FN_yes_selfloops/files/sub-1_t
 taus_nsl = np.array(io.load_txt("data/test16/seven_FN_no_selfloops/files/sub-1_tau_scalar.tsv"))
 print(taus_nsl.shape, taus_sl.shape)
 
-#taus_sl --> (t0), t1, ..., t8
-#data --> 2, 6, 7, 1, 8, ...
+#taus_sl --> (tau0), tau1 (refers to FN_0), ..., t
+#labels --> 2, 6, 6, 1, 3, ...
 
-# give to each node the tau corrispondet to it's 
+# give to each node the tau corrispondet 
+#ex. node10 is in the FN_2 so it will get the tau of the structral matrix of FN_2
 tau_nodes_sl = np.zeros(s.shape[0])
-tau_nodes_sl_cat = np.zeros(s.shape[0]) #categorical
-for FN in np.arange(1,n+1,1):
-    for node, label in zip(range(s.shape[0]), data):
+tau_nodes_nsl = np.zeros(s.shape[0]) #categorical
+
+for FN in range(n_FN):
+    for node, label in zip(range(s.shape[0]), labels):
         if(label == FN):
-            tau_nodes_sl[node] = taus_sl[FN] # NB not -1, i don't want to use tau0
-            tau_nodes_sl_cat[node] = FN
+            tau_nodes_sl[node] = taus_sl[FN+1] # ATTENTION +1, or for example a node in FN_0 will recieve the tau0 )of the identity matrix
+            tau_nodes_nsl[node] = taus_nsl[FN] #here the first tau is fereffet to FN:0, no need of summation
 
 tau0 = np.ones(s.shape[0]) * taus_sl[0] #all the node have tau0
 
-print(tau_nodes_sl.shape, np.unique(tau_nodes_sl).shape)
+print(tau_nodes_sl.shape, np.unique(tau_nodes_sl).shape) #360 nodes, 7 differtn taus (not added tau0 in this list)
 print(np.unique(tau_nodes_sl))
 
-tau_nodes_nsl = np.zeros(s.shape[0])
-tau_nodes_nsl_cat = np.zeros(s.shape[0]) #categorical
-for FN in np.arange(1,n+1,1):
-    for node, label in zip(range(s.shape[0]), data):
-        if(label == FN):
-            tau_nodes_nsl[node] = taus_nsl[FN-1] # NB yes -1, here we haven't tau0 at the start
-            tau_nodes_nsl_cat[node] = FN-1
+
+###########################################################################
+### plot taus
+##########################################################################
+
+#def RMSE(c): return np.sqrt(np.square(np.subtract(y_actual,y_predicted)).mean())
+from numpy.linalg import norm
+
+E_sl = norm(io.load_txt(f"data/test16/seven_FN_yes_selfloops/files/sub-1_ts-innov.tsv.gz"))
+E_nsl = norm(io.load_txt(f"data/test16/seven_FN_no_selfloops/files/sub-1_ts-innov.tsv.gz"))
 
 
+fig, a = plt.subplots(1,1,dpi=300)
 
-###########################################################################à
+a.plot(np.arange(0,len(taus_sl), 1), taus_sl, label=f"With self-loops, norm = {norm(E_sl):.2f}")
+a.plot(np.arange(1,len(taus_nsl)+1, 1), taus_nsl, label=f"Without self-loops, norm = {norm(E_nsl):.2f}")
+
+a.set_xlabel("Functional Network number ...")
+a.set_ylabel("tau")
+
+plt.legend(loc="best")
+plt.grid()
+plt.savefig("data/test16/taus.png")
+
+
+###########################################################################
 ### VISUALIZE
 ##########################################################################
 from my_plot_nodes import plot_nodes
 from matplotlib.colors import ListedColormap
-colors = ['red', 'green', 'blue', 'orange', 'purple', 'cyan', 'yellow', 'magenta']
-cmap = ListedColormap(colors)
+#colors = ['red', 'green', 'blue', 'orange', 'purple', 'cyan', 'yellow', 'magenta']
+#cmap = ListedColormap(colors)
+
+#create discrete colormapù
+unique_values = np.unique(tau_nodes_sl) #should be 8 values (7 FN + tau0)
+colors = plt.cm.rainbow(np.linspace(0, 1, len(unique_values)))
+cmap_sl = ListedColormap(colors)
+
+unique_values = np.unique(tau_nodes_nsl) #should be 7 values (7 FN)
+colors = plt.cm.rainbow(np.linspace(0, 1, len(unique_values)))
+cmap_nsl = ListedColormap(colors)
 
 #plot 8 taus (one for each FN) in the case where I used self loop in the calculation
 #one coase where the taus have the original value and one where they are made categorical
 plot_nodes(tau_nodes_sl, "raw/atlas.nii.gz", "data/test16/taus_on_brain_sl.png", 
            display_mode="lyrz")#, figure=fig, axes=a[1], title="taus_on_brain_no_sl_cat")
-plot_nodes(tau_nodes_sl_cat, "raw/atlas.nii.gz", "data/test16/taus_on_brain_sl_cat.png", 
-           node_cmap=cmap, display_mode="lyrz")#, figure=fig, axes=a[1], title="taus_on_brain_no_sl_cat")
+plot_nodes(tau_nodes_sl, "raw/atlas.nii.gz", "data/test16/taus_on_brain_sl_cat.png", node_cmap=cmap_sl, display_mode="lyrz")#, figure=fig, axes=a[1], title="taus_on_brain_no_sl_cat")
 
 #plot_nodes(tau0, "raw/atlas.nii.gz", "data/test16/tau0_on_brain.png", display_mode="lyrz")#, figure=fig, axes=a[1], title="taus_on_brain_no_sl_cat")
 
 plot_nodes(tau_nodes_nsl, "raw/atlas.nii.gz", "data/test16/taus_on_brain_nsl.png", 
            display_mode="lyrz")#, figure=fig, axes=a[1], title="taus_on_brain_no_nsl_cat")
-plot_nodes(tau_nodes_nsl_cat, "raw/atlas.nii.gz", "data/test16/taus_on_brain_nsl_cat.png", 
-           node_cmap=cmap, display_mode="lyrz")#, figure=fig, axes=a[1], title="taus_on_brain_no_nsl_cat")
+plot_nodes(tau_nodes_nsl, "raw/atlas.nii.gz", "data/test16/taus_on_brain_nsl_cat.png", node_cmap=cmap_nsl, display_mode="lyrz")#, figure=fig, axes=a[1], title="taus_on_brain_no_nsl_cat")
 
 
 
