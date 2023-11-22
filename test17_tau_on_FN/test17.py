@@ -105,7 +105,7 @@ plt.savefig(f"{data_path}/boxplot_taus.png")
 ###############################
 
 fig, a = plt.subplots(dpi=300)
-plt.grid()
+#plt.grid()
 
 sns.set()
 sns.violinplot(ax = a, data=df, x="labels", y="taus", hue="Lesion/Connectome", order=order).set(
@@ -121,7 +121,7 @@ plt.savefig(f"{data_path}/violinplot_taus.png")
 ###############################
 
 fig, a = plt.subplots(dpi=300)
-plt.grid()
+#plt.grid()
 
 sns.set()
 sns.swarmplot(ax = a, data=df, x="labels", y="taus", hue="Lesion/Connectome", order=order).set(

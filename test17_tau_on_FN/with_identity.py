@@ -36,9 +36,13 @@ if not os.path.exists(data_path):
 L_path = "data/test15/power_L"
 if not os.path.exists(L_path):
     os.makedirs(L_path)
+path = "data/test15/identity"
+if not os.path.exists(path):
+    os.makedirs(path)
 
 #max power taht we want to test
-n = 20 #max power will be n-1
+n = 4 #max power will be n-1
+clip = True
 
 calculations = 1
 
@@ -66,14 +70,16 @@ if calculations:
             structural_files = f'raw/SC_avg56.mat', #f"raw/SC_avg56.mat",
             add_tau0 = False,
             sub = "1",
-            odr = f"data/test15/{i}_powers_no_tau0")
+            bound_taus =clip,
+            odr = f"{path}/{i}_powers_no_tau0")
 
             #with tau0
             crispy_gls_scalar.multitau_gls_estimation(tsfile = "raw/RS_1subj.mat",
             structural_files = f'raw/SC_avg56.mat', #calculate L^1
             add_tau0 = True, #calculate L^0 (I)
             sub = "1",
-            odr = f"data/test15/{i}_powers_yes_tau0")
+            bound_taus =clip,
+            odr = f"{path}/{i}_powers_yes_tau0")
 
         L_to_use = [f"data/test15/power_L/L_" + str(j) + ".mat" for j in np.arange(2, i+1, 1)] # numbers: 2, 3, ..., i
         print(L_to_use)
@@ -84,7 +90,8 @@ if calculations:
         structural_files_nonorm = L_to_use, #pass directly L^2, L^3, ...
         add_tau0 = False, #calculate L^0 (I)
         sub = "1",
-        odr = f"data/test15/{i}_powers_no_tau0")
+        bound_taus =clip,
+        odr = f"{path}/{i}_powers_no_tau0")
 
         #with tau 0
         crispy_gls_scalar.multitau_gls_estimation(tsfile = "raw/RS_1subj.mat",
@@ -92,7 +99,8 @@ if calculations:
         structural_files_nonorm = L_to_use, #pass directly L^2, L^3, ...
         add_tau0 = True, #calculate L^0 (I)
         sub = "1",
-        odr = f"data/test15/{i}_powers_yes_tau0")
+        bound_taus =clip,
+        odr = f"{path}/{i}_powers_yes_tau0")
 
 
 ########################################
@@ -113,10 +121,10 @@ x = np.arange(1, n, 1)
 
 for i in np.arange(1, n, 1): #dont' exist a test woith index 0
     print(f"extracting {i} error")
-    Es_n0[i] = norm(io.load_txt(f"data/test15/{i}_powers_no_tau0/files/sub-1_ts-innov.tsv.gz"))
-    Es_y0[i] = norm(io.load_txt(f"data/test15/{i}_powers_yes_tau0/files/sub-1_ts-innov.tsv.gz"))
-    SQ_n0[i] = SQ(io.load_txt(f"data/test15/{i}_powers_no_tau0/files/sub-1_ts-innov.tsv.gz"))
-    SQ_y0[i] = SQ(io.load_txt(f"data/test15/{i}_powers_yes_tau0/files/sub-1_ts-innov.tsv.gz"))
+    Es_n0[i] = norm(io.load_txt(f"{path}/{i}_powers_no_tau0/files/sub-1_ts-innov.tsv.gz"))
+    Es_y0[i] = norm(io.load_txt(f"{path}/{i}_powers_yes_tau0/files/sub-1_ts-innov.tsv.gz"))
+    SQ_n0[i] = SQ(io.load_txt(f"{path}/{i}_powers_no_tau0/files/sub-1_ts-innov.tsv.gz"))
+    SQ_y0[i] = SQ(io.load_txt(f"{path}/{i}_powers_yes_tau0/files/sub-1_ts-innov.tsv.gz"))
 
 
 fig, a = plt.subplots(1,2, dpi=300)
@@ -132,57 +140,7 @@ a[1].set_ylabel("Sum Of Square(Error)")
 
 plt.legend()
 plt.tight_layout()
-plt.savefig("data/test15/E_Vs_number_powers_used.png")
-
-##########################################################
-##########################################################
-
-"""
-    plot the taus for each order
-"""
-taus_y0 = [] #list pof lists of taus (one list foe each max power used)
-taus_n0 = []
-
-for i in np.arange(1, n, 1): #i don0t want 0 index
-    if i == 1:
-        with open(f"data/test15/{i}_powers_no_tau0/files/sub-1_tau_scalar.tsv", 'r', newline='', encoding='utf-8') as tsvfile:
-            tsv = csv.reader(tsvfile, delimiter='\t')
-            for row in tsv:
-                # Assuming the file contains only one value, extract it from the first row and first column
-                if len(row) > 0:
-                    taus_n0.append(np.array([float(row[0])]))
-                    break  # Exit the loop since the value is found
-        #it has at least 2 taus sp can unse thi norma fucntion
-        taus_y0.append(np.array(io.load_txt(f"data/test15/{i}_powers_yes_tau0/files/sub-1_tau_scalar.tsv")))
-
-    else:
-        taus_n0.append(np.array(io.load_txt(f"data/test15/{i}_powers_no_tau0/files/sub-1_tau_scalar.tsv")))
-        taus_y0.append(np.array(io.load_txt(f"data/test15/{i}_powers_yes_tau0/files/sub-1_tau_scalar.tsv")))
-
-#NB taus_y0 has always an elemtn in addition (the tua0)
-
-fig, a = plt.subplots(1,1, dpi=300)
-
-for i in np.arange(1, n, 1): #i is the max power that i am using
-    print(f"power: ", {i})
-
-    #ATTENTION in the list indices start from 0!!
-
-    print("without self loop: ", taus_n0[i-1])
-    print("with self loop: ", taus_y0[i-1])
-
-    #print(len(taus_n0[i]), len(np.arange(1, len(taus_n0[i])+1, 1))) 
-    #print(len(taus_y0[i]), len(np.arange(0, len(taus_y0[i]), 1))) 
-
-    a.plot(np.arange(1, len(taus_n0[i-1])+1, 1), taus_n0[i-1], "o-", label=f"power:{i} without self loops", linewidth=2)
-    a.plot(np.arange(0, len(taus_y0[i-1]), 1), taus_y0[i-1], "o-", label=F"power:{i} with self loops", linewidth=2)
-
-a.set_xlabel("tau number")
-a.set_ylabel("value of tau")
-
-plt.legend(loc="best")
-
-plt.savefig("data/test15/taus_differt_powers.png")
+plt.savefig(f"{path}/E_Vs_number_powers_used.png")
 
 
 ######################################################àà
@@ -195,7 +153,7 @@ taus_n0 = []
 
 for i in np.arange(1, n, 1): #i don0t want 0 index
     if i == 1:
-        with open(f"data/test15/{i}_powers_no_tau0/files/sub-1_tau_scalar.tsv", 'r', newline='', encoding='utf-8') as tsvfile:
+        with open(f"{path}/{i}_powers_no_tau0/files/sub-1_tau_scalar.tsv", 'r', newline='', encoding='utf-8') as tsvfile:
             tsv = csv.reader(tsvfile, delimiter='\t')
             for row in tsv:
                 # Assuming the file contains only one value, extract it from the first row and first column
@@ -204,7 +162,7 @@ for i in np.arange(1, n, 1): #i don0t want 0 index
                     break  # Exit the loop since the value is found
 
     else:
-        taus_n0.append(np.array(io.load_txt(f"data/test15/{i}_powers_no_tau0/files/sub-1_tau_scalar.tsv")))
+        taus_n0.append(np.array(io.load_txt(f"{path}/{i}_powers_no_tau0/files/sub-1_tau_scalar.tsv")))
 
 #NB taus_y0 has always an elemtn in addition (the tua0)
 
@@ -221,7 +179,7 @@ a.set_ylabel("value of tau")
 plt.legend(loc="best")
 
 
-plt.savefig("data/test15/taus_N0_differt_powers.png")
+plt.savefig(f"{path}/taus_N0_differt_powers.png")
 
 
 ######################################################àà
@@ -233,7 +191,7 @@ plt.savefig("data/test15/taus_N0_differt_powers.png")
 taus_y0 = [] #list pof lists of taus (one list foe each max power used)
 
 for i in np.arange(1, n, 1): #i don0t want 0 inde
-    taus_y0.append(np.array(io.load_txt(f"data/test15/{i}_powers_yes_tau0/files/sub-1_tau_scalar.tsv")))
+    taus_y0.append(np.array(io.load_txt(f"{path}/{i}_powers_yes_tau0/files/sub-1_tau_scalar.tsv")))
 
 #NB taus_y0 has always an elemtn in addition (the tua0)
 
@@ -249,4 +207,5 @@ a.set_ylabel("value of tau")
 
 plt.legend(loc="best")
 
-plt.savefig("data/test15/taus_Y0_differt_powers.png")
+plt.savefig(f"{path}/taus_Y0_differt_powers.png")
+
