@@ -16,7 +16,7 @@ from nilearn.plotting import plot_matrix
 
 """
     Try the crispy_var_model script
-    NOT put -not0 --> so I want tau0
+    NOT put -not0 --> so I want tau0 (yes self loop)
 
     try both cripsy_scalar with normalized and not normlaized structral matrices
 
@@ -25,14 +25,14 @@ from nilearn.plotting import plot_matrix
 """
 calculations = False
 #matrix used for connecitvut matrix
-c = "data/test13/functional_connectivity"
+c = "raw/SC_avg56.mat"
 
 #calculate functional connectivity
 ts = io.load_mat("raw/RS_1subj.mat") #load fMRI ts
 fs = functional_connectivity(ts) #calculate fun_conn (corr of easch 2 ts of a single voxels)
 fs = np.abs(fs) #negative connecitviyt doesnt exists
-plot_connectivity(fs, f"{c}.png")
-io.export_mtx(fs,f"{c}.mat" )
+#plot_connectivity(fs, f"{c}.png")
+#io.export_mtx(fs,f"{c}.mat" )
 
 if calculations:
     crispy_var_model.VAR_estimation(tsfile = "raw/RS_1subj.mat", #inside usese python module
@@ -40,18 +40,18 @@ if calculations:
                     odr = "data/test13/var_model")
 
     crispy_gls_scalar.multitau_gls_estimation(tsfile = "raw/RS_1subj.mat",
-                    structural_files = f"{c}.mat",
+                    structural_files = f"{c}",
                     sub = "1",
                     odr = "data/test13/norm_diffusion_model")
 
     crispy_gls_scalar.multitau_gls_estimation(tsfile = "raw/RS_1subj.mat",
-                    structural_files = f"{c}.mat",
+                    structural_files = f"{c}",
                     structural_files_nonorm = f"{c}.mat",
                     sub = "1",
                     odr = "data/test13/not_norm_diffusion_model")
 
 ###### LOAD RESULTS
-conn_mat = io.load_mat(f"{c}.mat")
+conn_mat = io.load_mat(f"{c}")
 
 # results from VAR
 A = io.load_txt("data/test13/var_model/files/sub-1_Amat.txt")
@@ -80,7 +80,9 @@ L1 = laplacian.normalisation(L1_nn, degree, norm="rwo")
 M_nn = I - t0 * I - t1 * L1_nn
 M = I - t0 * I - t1 * L1
 
+#####################################################àà
 ###### CHECK IF A == (I - tao0 I - tau1 L1)
+########################################################
 
 fig, a = plt.subplots(4,3, figsize=(10,10), dpi = 300)
 
@@ -131,7 +133,21 @@ for i in range(4):
 fig.suptitle("Nothing done --- z-scored --- scaled 0-1")
 fig.savefig("data/test13/A_M.png")
 
+#####################################################àà
+###### PLOT M WITH CONSTRAST
+########################################################
+
+fig, a = plt.subplots(1,2,dpi=300)
+
+a[0].imshow(M, interpolation='nearest', aspect="auto", vmin=0, vmax=0.01); a[0].set_title(f"M, similar to VAR matrix")
+a[1].imshow(M_nn, interpolation='nearest', aspect="auto", vmin=0, vmax=0.01); a[1].set_title(f"M_nn, similar to VAR matrix")
+
+fig.savefig("data/test13/M_contrast.png")
+
+
+####################################################
 ###### PLOT ERRORS
+#####################################################à
 fig, a = plt.subplots(3,4, figsize = (30, 10), dpi = 300)
 
 # normal, how they are
@@ -193,15 +209,25 @@ fig.savefig("data/test13/errors.png")
 
 from numpy.linalg import norm
 
-fig, a = plt.subplots(3,1, dpi=300)
+fig, a = plt.subplots(3,2, dpi=300)
+
+a = a.flatten()
 
 pos0 = a[0].imshow(np.abs(E_var - E_diff), interpolation='nearest', aspect="auto"); a[0].set_title(f"abs(E_var - E_diff), norm{norm(np.abs(E_var - E_diff)):.2f}")
 pos1 = a[1].imshow(np.abs(E_var - E_diff_nn), interpolation='nearest', aspect="auto"); a[1].set_title(f"abs(E_var - E_diff_nn), norm={norm(np.abs(E_var - E_diff_nn)):.2f}")
 pos2 = a[2].imshow(np.abs(E_diff - E_diff_nn), interpolation='nearest', aspect="auto"); a[2].set_title(f"abs(E_diff - E_diff_nn), norm={norm(np.abs(E_diff - E_diff_nn)):.2f}")
 
+pos3 = a[3].imshow(np.abs(E_var - E_diff), interpolation='nearest', aspect="auto", vmin=0, vmax=1); a[3].set_title(f"abs(E_var - E_diff), norm{norm(np.abs(E_var - E_diff)):.2f}")
+pos4 = a[4].imshow(np.abs(E_var - E_diff_nn), interpolation='nearest', aspect="auto", vmin=0, vmax=1); a[4].set_title(f"abs(E_var - E_diff_nn), norm={norm(np.abs(E_var - E_diff_nn)):.2f}")
+pos5 = a[5].imshow(np.abs(E_diff - E_diff_nn), interpolation='nearest', aspect="auto", vmin=0, vmax=1); a[5].set_title(f"abs(E_diff - E_diff_nn), norm={norm(np.abs(E_diff - E_diff_nn)):.2f}")
+
 plt.colorbar(pos0, ax=a[0]) 
 plt.colorbar(pos1, ax=a[1])
 plt.colorbar(pos2, ax=a[2])
+
+plt.colorbar(pos3, ax=a[3]) 
+plt.colorbar(pos4, ax=a[4])
+plt.colorbar(pos5, ax=a[5])
 
 
 plt.tight_layout()
