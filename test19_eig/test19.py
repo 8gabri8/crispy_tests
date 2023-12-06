@@ -26,7 +26,7 @@ min = 2 #min number of componet to use
 
 # eigendecomposition
 # Compute eigenvalues and eigenvectors
-eigenvalues, eigenvectors = np.linalg.eigh(s)
+eigenvalues, eigenvectors = np.linalg.eigh(s) ##CHOSE IF TO USE LAPLACIN OR SRUCRUAL MATRIX
 
 # Sort eigenvalues and select top k components
 sorted_indices = np.argsort(eigenvalues)[::-1]

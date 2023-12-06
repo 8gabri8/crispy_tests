@@ -31,7 +31,7 @@ if not os.path.exists(L_path):
 ### CREATE SC MATRIX
 ############################################
 
-n_roi = 60
+n_roi = 6
 
 mtx = np.random.rand(n_roi, n_roi)
 mtx = (mtx + mtx.T) / 2
@@ -44,7 +44,7 @@ io.export_mtx(mtx, f"{path}/SC.mat")
 ### CREATE TS
 ############################################
 
-n_tps = 500
+n_tps = 50
 
 ts = np.zeros((n_roi, n_tps)) #ts empty
 
@@ -124,7 +124,10 @@ io.export_mtx(L,f'{L_path}/L_remaining.mat')
 
 #so we need n + 1 + 1(tau0) tus to claiclayte
 
-taus = np.random.uniform(low=0.02, high=0.1, size=(n+2,)) #
+taus = np.random.uniform(low=0.02, high=0.1, size=(n+2,)) ##we want also tau0
+#taus = np.random.uniform(low=-0.1, high=0.1, size=(n+2,)) 
+
+
 io.export_mtx(taus, f'{path}/taus_GT.mat') 
 
 ############################################
@@ -177,15 +180,18 @@ crispy_gls_scalar.multitau_gls_estimation(tsfile = f"{path}/Y_synth.mat",
 taus_GT = io.load_mat(f"{path}/taus_GT.mat")
 taus_predicted = np.array(io.load_txt(f"{path}/diffusion_model/files/sub-1_tau_scalar.tsv"))
 
+E = (norm(io.load_txt(f"data/test22/diffusion_model/files/sub-1_ts-innov.tsv.gz")))
+
+
 fig, a = plt.subplots(1,2,dpi=300, figsize=(10,5))
-fig.suptitle(f'N {n_roi}, TS {n_tps}, Taus {n+2} ', fontsize=16)
+fig.suptitle(f'N {n_roi}, TS {n_tps}, Taus {n+2} EIGENDECOMPOSITION', fontsize=16)
 a[0].plot(taus_GT, label = "GT")
 a[0].set_xlabel("Tau number ...")
 a[0].set_ylabel("Tau value")
-a[1].plot(taus_predicted, label = "Predicted")
-a[1].set_xlabel("Tau value")
-a[0].set_xlabel("Tau number ...")
-a[0].set_ylabel("Tau value")
+a[1].plot(taus_predicted, label = f"Predicted, norm {E:.2f}")
+a[1].set_xlabel("Tau number ...")
+a[1].set_ylabel("Tau value")
+
 a[0].legend(loc='upper left')
 a[1].legend(loc='upper left')
 

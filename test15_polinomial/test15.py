@@ -38,9 +38,9 @@ if not os.path.exists(L_path):
     os.makedirs(L_path)
 
 #max power taht we want to test
-n = 20 #max power will be n-1
+n = 15 #max power will be n-1
 
-calculations = 1
+calculations = 0
 
 if calculations:
 
@@ -180,7 +180,7 @@ for i in np.arange(1, n, 1): #i is the max power that i am using
 a.set_xlabel("tau number")
 a.set_ylabel("value of tau")
 
-plt.legend(loc="best")
+#plt.legend(loc="best")
 
 plt.savefig("data/test15/taus_differt_powers.png")
 
@@ -216,9 +216,10 @@ for i in np.arange(1, n, 1):
     a.plot(np.arange(1, len(taus_n0[i])+1, 1), taus_n0[i], "o-", label=f"power:{i+1} without self loops", linewidth=2)
 
 a.set_xlabel("tau number")
+a.set_title("Without Self Loops")
 a.set_ylabel("value of tau")
 
-plt.legend(loc="best")
+#plt.legend(loc="best")
 
 
 plt.savefig("data/test15/taus_N0_differt_powers.png")
@@ -246,7 +247,8 @@ for i in np.arange(1, n, 1):
 
 a.set_xlabel("tau number")
 a.set_ylabel("value of tau")
+a.set_title("With Self Loops")
 
-plt.legend(loc="best")
+#plt.legend(loc="best")
 
 plt.savefig("data/test15/taus_Y0_differt_powers.png")

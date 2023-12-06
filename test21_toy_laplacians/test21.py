@@ -46,20 +46,29 @@ io.export_mtx(mtx, f"{path}/SC.mat")
 ### CREATE TS
 ############################################
 
-n_tps = 500
+n_tps = 1500
+perc_spike = 0.2 #percentage of spkes to have
 
 ts = np.zeros((n_roi, n_tps)) #ts empty
 
 # will contain where the spike are in the tsù
 ## Fix spike to be before 2/3 of ts
-ts_spike = []
-for i in range(n_roi):
-    temp = np.zeros(n_tps)
-    k = np.random.randint(0, int((2/3) * n_tps))
-    temp[k] = 1
-    ts_spike.append(temp)
 
-ts_spike = np.array(ts_spike, dtype=int) 
+#one spike for each row
+# ts_spike = []
+# for i in range(n_roi):
+#     temp = np.zeros(n_tps)
+#     k = np.random.randint(0, int((2/3) * n_tps))
+#     temp[k] = 1
+#     ts_spike.append(temp)
+# ts_spike = np.array(ts_spike, dtype=int) 
+
+#more spikes per rows
+ts_spike = np.zeros((n_roi, n_tps))
+for i in range(int(n_tps * perc_spike)):
+    row = np.random.randint(0, n_roi)
+    column = np.random.randint(0, int((2/3) * n_tps))
+    ts_spike[row, column] = 1
 
 yes_noise = False
 NOISE = 1
@@ -100,6 +109,16 @@ for i in np.arange(1,n):
 # Create tau_vec as an array of random positive values between 0.02 and 0.1
 #ATTENTION IF TAU IS TOO BIG THERE IS A NON CONVERGENCE
 taus = np.random.uniform(low=0.02, high=0.1, size=(n,)) #we want also tau0
+
+#try tau in ascdending order, so tau0 is the smallest
+#taus.sort()
+
+
+#try negative taus
+#taus = np.random.uniform(low=-0.1, high=0.1, size=(n,)) #we want also tau0
+
+print(taus)
+
 io.export_mtx(taus, f'{path}/taus_GT.mat') 
 
 ############################################
@@ -124,6 +143,7 @@ for i in np.arange(1, n_tps): # foer each timeporint from the second one
         Y[:,i] += ts_random[:, i]
 
 plot_greyplot(Y,f"{path}/Y_synth.png")
+#plt.imshow(Y, cmap="gray", interpolation='none') ; plt.savefig(f"{path}/Y_synth.png")
 io.export_mtx(Y, f"{path}/Y_synth.mat")
 
 
@@ -151,20 +171,34 @@ taus_predicted = np.array(io.load_txt(f"{path}/diffusion_model/files/sub-1_tau_s
 print(taus_GT.shape)
 print(taus_predicted.shape)
 
+E = (norm(io.load_txt(f"data/test21/diffusion_model/files/sub-1_ts-innov.tsv.gz")))
+
 fig, a = plt.subplots(1,2,dpi=300, figsize=(10,5))
-fig.suptitle(f'N {n_roi}, TS {n_tps}, Taus {n} ', fontsize=16)
+fig.suptitle(f'N {n_roi}, TS {n_tps}, Taus {n} POWERS OF LAPLACIANS', fontsize=16)
 a[0].plot(taus_GT, label = "GT")
 a[0].set_xlabel("Tau number ...")
 a[0].set_ylabel("Tau value")
-a[1].plot(taus_predicted, label = "Predicted")
-a[1].set_xlabel("Tau value")
-a[0].set_xlabel("Tau number ...")
-a[0].set_ylabel("Tau value")
+a[1].plot(taus_predicted, label = f"Predicted, norm {E:.2f}")
+a[1].set_xlabel("Tau number ...")
+a[1].set_ylabel("Tau value")
+
 a[0].legend(loc='upper left')
 a[1].legend(loc='upper left')
 
 plt.tight_layout()
 plt.savefig(f"{path}/compare_taus.png")
+
+############################################
+### ERROR MATRIX, SHOULD SHOW SOME SPIKES
+############################################
+
+E = io.load_txt(f"data/test21/diffusion_model/files/sub-1_ts-innov.tsv.gz")
+
+fig, a = plt.subplots(1,1, dpi=300)
+a.imshow(E)
+plt.savefig(f"{path}/innov_matrix.png")
+
+
 
 ############################################
 ### RECONSTRUCT Y WITH PREDICTED TAUS
