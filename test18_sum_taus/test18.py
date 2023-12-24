@@ -113,7 +113,7 @@ for i in range(s.shape[0]):
 
 fig, a = plt.subplots(1,1, dpi=300)
 a.plot(norm_E_double,label="nom Error two taus")
-a.plot(norm_E_single,label="nom Error one taus SUM")
+a.plot(norm_E_single,label="nom Error one taus MEAN")
 
 plt.legend()
 plt.tight_layout()

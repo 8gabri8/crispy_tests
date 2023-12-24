@@ -99,7 +99,7 @@ if calculations:
     crispy_gls_scalar.multitau_gls_estimation(tsfile = "raw/RS_1subj.mat",
                     structural_files = string_list, #f"raw/SC_avg56.mat",
                     add_tau0 = False,
-                    bound_taus=True,
+                    #bound_taus=True,
                     sub = "1",
                     odr = "data/test16/seven_FN_no_selfloops")
     
@@ -115,7 +115,7 @@ if calculations:
     crispy_gls_scalar.multitau_gls_estimation(tsfile = "raw/RS_1subj.mat",
                 structural_files = string_list, #f"raw/SC_avg56.mat",
                 add_tau0 = True,
-                bound_taus=True,
+                #bound_taus=True,
                 sub = "1",
                 odr = "data/test16/seven_FN_yes_selfloops")
     
@@ -168,6 +168,8 @@ a.set_xticks(range(n_FN +1 ))
 a.set_xticklabels(ticks) #must add the tau0
 a.set_xlabel("Functional Network")
 a.set_ylabel("tau")
+plt.suptitle("Structural Matrix Normal")
+
 
 plt.legend(loc="best")
 plt.grid()

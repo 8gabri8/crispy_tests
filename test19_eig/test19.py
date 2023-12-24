@@ -21,7 +21,7 @@ L, degree = laplacian.compute_laplacian(s, selfloops="degree")
 L = laplacian.normalisation(L, degree, norm="rwo")
 
 #set number componets
-num_components = 5
+num_components = 30
 min = 2 #min number of componet to use
 
 # eigendecomposition
@@ -80,9 +80,11 @@ for j in np.arange(min,num_components+1,1): # i want to use frm 2 to numcomp
     taus.append(np.array(io.load_txt(f"data/test19/components/files/sub-1_tau_scalar.tsv")))
 
 print(taus)
-fig, a = plt.subplots(1,2,dpi=300)
+fig, a = plt.subplots(1,2,dpi=300, figsize = (15,5))
 for i in range(len(E_eig)):
-    a[0].plot(np.arange(1,len(taus[i])+1), taus[i], label=f"with {i+2} components: {E_eig[i]}")
+    a[0].plot(np.arange(1,len(taus[i])+1), taus[i],"o-", label=f"with {i+2} components: {E_eig[i]}")
+a[0].set_xlabel("Number of components used")
+a[0].set_ylabel("Tau value")
 
 a[1].plot(np.arange(min,len(E_eig)+min), E_eig, "o-", label="Error")
 a[1].set_xlabel("Number of components used")
@@ -93,3 +95,19 @@ plt.legend(loc="best")
 plt.tight_layout()
 plt.savefig("data/test19/tuas_E_eig.png")
 plt.show()
+
+fig, a = plt.subplots(1,1,dpi=300, figsize = (5,5))
+
+a.plot(np.arange(min,len(E_eig)+min), E_eig, "o-", label="norm(E)")
+a.set_xlabel("Number of components used")
+a.ticklabel_format(useOffset=False)
+
+plt.legend(loc="best")
+
+plt.tight_layout()
+plt.savefig("data/test19/error.png")
+plt.show()
+
+df = pd.DataFrame(E_eig)
+df.to_csv("data/test19/df.csv")
+print(df.head())

@@ -252,3 +252,19 @@ a.set_title("With Self Loops")
 #plt.legend(loc="best")
 
 plt.savefig("data/test15/taus_Y0_differt_powers.png")
+
+
+###########################
+###########################
+########################àà#
+
+fig, a = plt.subplots(1,1, dpi=300, figsize=(5,3))
+a.plot(x, Es_n0[1:], "o-", label="Without self loops") #start from 1, becose there is no test woth index 0 (max power =0)
+a.plot(x, Es_y0[1:], "o-", label="With self loops") 
+a.set_xlabel("Order of polynomial")
+a.set_ylabel("norm(E)")
+
+
+plt.legend()
+plt.tight_layout()
+plt.savefig("data/test15/E_single.png")

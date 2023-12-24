@@ -26,12 +26,29 @@ L_path = "data/test22/power_L"
 if not os.path.exists(L_path):
     os.makedirs(L_path)
 
+one_spike_per_row = 0
+n_roi = 6
+n_tps = 50
+n = 5 #number of single components to use
+
+############################################
+### CHOOSE TAUS
+############################################
+
+# Create tau_vec as an array of random positive values between 0.02 and 0.1
+#ATTENTION IF TAU IS TOO BIG THERE IS A NON CONVERGENCE
+
+#so we need n + 1 + 1(tau0) tus to claiclayte
+
+taus = np.random.uniform(low=0.02, high=0.1, size=(n+2,)) ##we want also tau0
+#taus = np.random.uniform(low=-0.1, high=0.1, size=(n+2,)) 
+
+
+io.export_mtx(taus, f'{path}/taus_GT.mat') 
 
 ############################################
 ### CREATE SC MATRIX
 ############################################
-
-n_roi = 6
 
 mtx = np.random.rand(n_roi, n_roi)
 mtx = (mtx + mtx.T) / 2
@@ -44,20 +61,29 @@ io.export_mtx(mtx, f"{path}/SC.mat")
 ### CREATE TS
 ############################################
 
-n_tps = 50
+perc_spike = 0.2 #percentage of spkes to have
 
 ts = np.zeros((n_roi, n_tps)) #ts empty
 
 # will contain where the spike are in the tsù
 ## Fix spike to be before 2/3 of ts
-ts_spike = []
-for i in range(n_roi):
-    temp = np.zeros(n_tps)
-    k = np.random.randint(0, int((2/3) * n_tps))
-    temp[k] = 1
-    ts_spike.append(temp)
 
-ts_spike = np.array(ts_spike, dtype=int) 
+#one spike for each row
+if (one_spike_per_row):
+    ts_spike = []
+    for i in range(n_roi):
+        temp = np.zeros(n_tps)
+        k = np.random.randint(0, int((2/3) * n_tps))
+        temp[k] = 1
+        ts_spike.append(temp)
+    ts_spike = np.array(ts_spike, dtype=int) 
+else:
+    #more spikes per rows
+    ts_spike = np.zeros((n_roi, n_tps))
+    for i in range(int(n_tps * perc_spike)):
+        row = np.random.randint(0, n_roi)
+        column = np.random.randint(0, int((2/3) * n_tps))
+        ts_spike[row, column] = 1
 
 yes_noise = False
 NOISE = 1
@@ -76,7 +102,7 @@ plot_greyplot(mtx,f"{path}/mtx_sc_synth.png")
 ### CONSTRUCT EIGENBRAINS
 ############################################
 
-n = 5 #number of single components to use
+
 if n > n_roi:
     print("Impossible to have more conponents than ROI")
     import sys
@@ -115,20 +141,6 @@ L, degree = laplacian.compute_laplacian(io.load_mat(f"{eig_path}/remaining.mat")
 L = laplacian.normalisation(L, degree, norm="rwo")
 io.export_mtx(L,f'{L_path}/L_remaining.mat') 
 
-############################################
-### CHOOSE TAUS
-############################################
-
-# Create tau_vec as an array of random positive values between 0.02 and 0.1
-#ATTENTION IF TAU IS TOO BIG THERE IS A NON CONVERGENCE
-
-#so we need n + 1 + 1(tau0) tus to claiclayte
-
-taus = np.random.uniform(low=0.02, high=0.1, size=(n+2,)) ##we want also tau0
-#taus = np.random.uniform(low=-0.1, high=0.1, size=(n+2,)) 
-
-
-io.export_mtx(taus, f'{path}/taus_GT.mat') 
 
 ############################################
 ### CONSTRUCT SYNTHEIC SIGNAL Yn
