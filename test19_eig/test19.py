@@ -39,18 +39,26 @@ E_eig = []
 taus = []
 img = []
 
+# abs for strucral matrix
+ABS = False
+
 for j in np.arange(min,num_components+1,1): # i want to use frm 2 to numcomp 
     for i in range(j):
-        temp = np.outer(sorted_eigenvectors[i], (sorted_eigenvalues[i] * sorted_eigenvectors[i].T))
+        if ABS:
+            temp = np.abs(np.outer(sorted_eigenvectors[i], (sorted_eigenvalues[i] * sorted_eigenvectors[i].T)))
+        else:
+            temp = np.outer(sorted_eigenvectors[i], (sorted_eigenvalues[i] * sorted_eigenvectors[i].T))
         img.append(temp)
         io.export_mtx(temp, f"data/test19/eigen_struct/{i}.mat")
         #print(temp.shape)
 
-
+    #create remaining matrix
     temp = np.zeros(s.shape)
     for i in range(j, s.shape[0]): #the rest of the compntes
         k = np.outer(sorted_eigenvectors[i], (sorted_eigenvalues[i] * sorted_eigenvectors[i].T))
         temp += k
+    if ABS:
+        temp = np.abs(temp)
     io.export_mtx(temp, f"data/test19/eigen_struct/remaining.mat")
 
     #plot

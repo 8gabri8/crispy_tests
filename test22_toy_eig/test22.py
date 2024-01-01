@@ -117,8 +117,14 @@ sorted_indices = np.argsort(eigenvalues)[::-1]
 sorted_eigenvectors = eigenvectors[sorted_indices]
 sorted_eigenvalues = eigenvalues[sorted_indices]
 
+# abs for strucral matrix
+ABS = False
+
 for i in range(n):
-    temp = np.outer(sorted_eigenvectors[i], (sorted_eigenvalues[i] * sorted_eigenvectors[i].T))
+    if ABS:
+        temp = np.abs(np.outer(sorted_eigenvectors[i], (sorted_eigenvalues[i] * sorted_eigenvectors[i].T)))
+    else:
+        temp = np.outer(sorted_eigenvectors[i], (sorted_eigenvalues[i] * sorted_eigenvectors[i].T))
     io.export_mtx(temp, f"{eig_path}/{i}.mat")
     #print(temp.shape)
 
@@ -126,6 +132,8 @@ temp = np.zeros(mtx.shape)
 for i in range(n, mtx.shape[0]): #the rest of the compntes
     k = np.outer(sorted_eigenvectors[i], (sorted_eigenvalues[i] * sorted_eigenvectors[i].T))
     temp += k
+if ABS:
+    temp = np.abs(temp)
 io.export_mtx(temp, f"{eig_path}/remaining.mat")
 
 ############################################
